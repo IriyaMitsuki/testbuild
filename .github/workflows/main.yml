@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up Rust
       uses: actions-rs/toolchain@v1
@@ -22,7 +22,8 @@ jobs:
       run: cargo build --release
 
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: rust-overlord.exe
         path: target/release/rust-overlord.exe
+        retention-days: 1
