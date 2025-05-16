@@ -25,11 +25,11 @@ fn main() {
     ];
 
     for (i, line) in ascii_art.iter().enumerate() {
-        let color = colors[i];
+        let color = colors[i % colors.len()];
         print!("\x1b[38;2;{};{};{}m{}", color.0, color.1, color.2, line);
         println!();
     }
-    println!("\x1b[0m"); // Сброс цветов
+    println!("\x1b[0m");
     io::stdout().flush().unwrap();
 
     // Ожидание 25 секунд
@@ -57,7 +57,8 @@ fn main() {
 
         for i in 0..bar_length {
             if i < filled_chars {
-                let r = (255.0 * (1.0 - (i as f32 / (bar_length - 1) as f32)) as u8;
+                // Исправленные вычисления цвета
+                let r = (255.0 * (1.0 - (i as f32 / (bar_length - 1) as f32))) as u8;
                 let g = (255.0 * (i as f32 / (bar_length - 1) as f32)) as u8;
                 let b = 0;
                 write!(&mut bar, "\x1b[38;2;{};{};{}m█", r, g, b).unwrap();
@@ -77,7 +78,7 @@ fn main() {
         std::thread::sleep(Duration::from_millis(50));
     }
 
-    // Очистка экрана и вывод сообщения
+    // Завершающее сообщение
     print!("\x1b[2J\x1b[H");
     println!("\x1b[32mActivation successful! Closing console in 25 seconds...\x1b[0m");
     io::stdout().flush().unwrap();
