@@ -3,7 +3,6 @@ use std::io::{self, Write as IoWrite};
 use std::time::{Duration, Instant};
 
 fn main() {
-    // Отображение ASCII-арта
     let ascii_art = vec![
         r#"  _____           _     _   _______          _       _ "#,
         r#" |  __ \         | |   | | |__   __|        | |     | |"#,
@@ -15,13 +14,13 @@ fn main() {
     ];
 
     let colors = [
-        (255, 0, 0),    // Красный
-        (255, 127, 0),  // Оранжевый
-        (255, 255, 0),  // Желтый
-        (0, 255, 0),    // Зеленый
-        (0, 0, 255),    // Синий
-        (75, 0, 130),   // Индиго
-        (148, 0, 211),  // Фиолетовый
+        (255, 0, 0), 
+        (255, 127, 0),
+        (255, 255, 0), 
+        (0, 255, 0), 
+        (0, 0, 255), 
+        (75, 0, 130),
+        (148, 0, 211),
     ];
 
     for (i, line) in ascii_art.iter().enumerate() {
@@ -32,14 +31,11 @@ fn main() {
     println!("\x1b[0m");
     io::stdout().flush().unwrap();
 
-    // Ожидание 25 секунд
     std::thread::sleep(Duration::from_secs(25));
 
-    // Очистка экрана
     print!("\x1b[2J\x1b[H");
     io::stdout().flush().unwrap();
 
-    // Прогресс-бар
     let bar_length = 50;
     let start_time = Instant::now();
     let total_duration = Duration::from_secs(45);
@@ -78,7 +74,6 @@ fn main() {
         std::thread::sleep(Duration::from_millis(50));
     }
 
-    // Завершающее сообщение
     print!("\x1b[2J\x1b[H");
     println!("\x1b[32mActivation successful! Closing console in 25 seconds...\x1b[0m");
     io::stdout().flush().unwrap();
