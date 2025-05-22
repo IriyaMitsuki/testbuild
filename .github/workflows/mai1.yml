@@ -1,0 +1,82 @@
+name: Build Windows Executable from main.cs
+
+on:
+  push:
+    branches: [ main ] # Или ваша основная ветка, например 'master'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Позволяет запускать вручную из вкладки Actions
+
+jobs:
+  build:
+    runs-on: windows-latest # Используем Windows для сборки
+
+    env:
+      # Имя для генерируемого .csproj файла (может быть любым)
+      CSPROJ_NAME: TempConsoleApp
+      # Имя для вашего выходного .exe файла
+      OUTPUT_EXE_NAME: MyProgram
+      # Имя вашего главного C# файла
+      MAIN_CS_FILE: main.cs
+      # Целевая платформа .NET (можно изменить на net472, net48, net7.0, net8.0 и т.д.)
+      # net6.0 - современный, требует .NET 6 Runtime.
+      # net472 - .NET Framework 4.7.2, шире совместим со старыми Windows "из коробки".
+      TARGET_FRAMEWORK: net6.0
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        # Укажите версию .NET SDK. Должна быть совместима с TARGET_FRAMEWORK.
+        # Например, для net6.0 используйте '6.0.x'. Для net472 также подойдет '6.0.x' или новее,
+        # так как SDK .NET Core умеют собирать проекты .NET Framework.
+        dotnet-version: '6.0.x' # Для net6.0
+        # dotnet-version: '8.0.x' # Если TARGET_FRAMEWORK, например, net8.0
+
+    - name: Create .csproj file
+      run: |
+        @"
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>${{ env.TARGET_FRAMEWORK }}</TargetFramework>
+    <AssemblyName>${{ env.OUTPUT_EXE_NAME }}</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <!-- Если бы у вас был файл иконки app.ico в корне репозитория, раскомментируйте следующую строку: -->
+    <!-- <ApplicationIcon>app.ico</ApplicationIcon> -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Явно указываем, какой файл компилировать. Важно, если имя .csproj не совпадает с .cs -->
+    <Compile Include="${{ env.MAIN_CS_FILE }}" />
+
+    <!-- Если бы у вас был файл иконки app.ico, и он должен быть включен:
+    <Content Include="app.ico" Condition="Exists('app.ico')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    -->
+  </ItemGroup>
+</Project>
+"@ | Out-File -FilePath "${{ env.CSPROJ_NAME }}.csproj" -Encoding utf8
+        Write-Host "Created ${{ env.CSPROJ_NAME }}.csproj to compile ${{ env.MAIN_CS_FILE }}"
+      shell: pwsh # Используем PowerShell для многострочной строки и Out-File
+
+    - name: Restore dependencies (if any)
+      run: dotnet restore ${{ env.CSPROJ_NAME }}.csproj
+
+    - name: Build the application
+      run: dotnet build ${{ env.CSPROJ_NAME }}.csproj --configuration Release --no-restore
+      # Выходной файл будет в: bin/Release/${{ env.TARGET_FRAMEWORK }}/${{ env.OUTPUT_EXE_NAME }}.exe
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.OUTPUT_EXE_NAME }}-Windows
+        # Путь к собранному .exe файлу
+        # Структура папок: <папка_с_csproj_если_не_корень>/bin/Configuration/TargetFramework/AssemblyName.exe
+        # Так как .csproj создается в корне, то:
+        path: bin/Release/${{ env.TARGET_FRAMEWORK }}/${{ env.OUTPUT_EXE_NAME }}.exe
+        if-no-files-found: error # Завершить с ошибкой, если файл не найден
